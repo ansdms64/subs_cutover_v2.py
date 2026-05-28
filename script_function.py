@@ -248,3 +248,5 @@ print(TITLE_OLT_CONNECT_script(olt=olt2,order=2))
 print(BK_OLD_SEJ_to_BK_NEW_SEJ_script_1234(olt=olt2))
 print(ACT_OLD_SEJ_to_ACT_NEW_SEJ_script_5678(olt=olt2))
 print(ACT_NEW_SEJ_cut_BK_NEW_SEJ_check_script_9(olt=olt2))
+
+print(olt)
