@@ -1,0 +1,23 @@
+9) Naju-TOD-FR05 Backup -> Active 회선으로 PREMIUM traffic 절체 테스트
+## SEJ044N interface disable ##
+
+edit
+
+set interfaces ae147 disable
+
+show | compare
+commit check
+commit
+
+[PREMIUM traffic 절체 확인 후]
+
+delete interfaces ae147 disable
+
+show | compare
+commit check
+commit
+
+exit
+
+## SEJ043W에서 확인 ##
+show interfaces ae47 | match rate

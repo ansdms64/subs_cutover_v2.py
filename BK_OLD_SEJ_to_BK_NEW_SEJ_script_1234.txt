@@ -1,0 +1,76 @@
+1.Naju-TOD-FR05연동
+가. Naju-TOD-FR05연동
+
+1) Naju-TOD-FR05 Backup 회선 Traffic 제거
+## SEJ048N interface disable ##
+
+*절체 전 트래픽 확인
+show interfaces ae23 | match rate
+
+*PREMIUM 트래픽 절체
+
+edit
+
+set interfaces ae23 disable
+
+show | compare
+commit check
+commit
+
+## SEJ048N 확인 ##
+run show interfaces ae23 | match rate
+
+* Naju-TOD-FR05 관련 static deactivate
+deactivate routing-options static route 112.190.206.167/32
+deactivate protocols bgp group NTOPIA-PEER neighbor 112.190.206.167
+
+show | compare
+commit check
+commit
+
+exit
+
+## SEJ048N 확인 ##
+show bgp summary
+show route 112.190.206.167/32
+
+2) Naju-TOD-FR05 신규 SEJ 연동을 위한 config 변경
+[Naju-TOD-FR05 configuration 작성 필요 / Naju-TOD-FR05 에서 진행]
+*Interface description 변경
+*SEJ044N lo0 Static 설정
+*SEJ044N BGP neighbor / BGP policy 설정
+
+3) SEJ044N <-> Naju-TOD-FR05 회선(Backup) BGP 연동
+## SEJ044N BGP 설정 ##
+edit
+activate protocols bgp group ACCESS-PEER neighbor 112.190.206.167
+
+show | compare
+commit check
+commit
+
+## 확인 ##
+run show bgp summary
+
+4) SEJ044N <-> Naju-TOD-FR05 회선(Backup) 물리회선 연동 및 테스트 (Ping test, dBm check) , PREMIUM traffic 확인
+[SEJ044N 물리회선 연동 / disable 설정 삭제 후 PREMIUM 트래픽 인가]
+## SEJ044N Interface 설정 ##
+
+delete interfaces ae147 disable
+
+show | compare
+commit check
+commit
+
+exit
+
+## 물리회선 연동 후 확인 ##
+show interfaces terse ae147
+show interfaces diagnostics optics xe-4/1/7 | no-more
+clear interfaces statistics xe-4/1/7
+ping rapid count 500 size 1000 ttl 1 112.190.210.126
+show interfaces ae147 | match rate
+show interfaces xe-4/1/7 extensive | match error
+show route 112.190.206.167/32
+show pim neighbors
+show pim interfaces

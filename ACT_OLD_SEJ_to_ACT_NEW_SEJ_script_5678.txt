@@ -1,0 +1,81 @@
+5) Naju-TOD-FR05 Active 회선 traffic 제거
+
+## SEJ047W interface disable ##
+
+*절체 전 트래픽 확인
+show interfaces ae13 | match rate
+
+*KORNET 트래픽 절체
+
+edit
+
+set interfaces ae13 disable
+
+show | compare
+commit check
+commit
+
+## SEJ047W 확인 ##
+run show interfaces ae13 | match rate
+
+* Naju-TOD-FR05 관련 static deactivate
+
+deactivate routing-options static route 112.190.206.167/32
+deactivate protocols bgp group NTOPIA-PEER neighbor 112.190.206.167
+
+show | compare
+commit check
+commit
+
+exit
+
+*SEJ047W 에서 Naju-TOD-FR05 가입자 session clear
+clear dhcp relay binding interface ae13
+
+## SEJ047W 확인 ##
+show dhcp relay binding interface ae13 summary
+show bgp summary
+show route 112.190.206.167/32
+
+6) Naju-TOD-FR05 신규 SEJ 연동을 위한 config 변경
+[Naju-TOD-FR05 configuration 작성 필요 / Naju-TOD-FR05 에서 진행]
+*Interface description 변경
+*SEJ043W lo0 Static 설정
+*SEJ043W BGP neighbor / BGP policy 설정
+
+
+7) SEJ043W <-> Naju-TOD-FR05 회선(Active) BGP 연동
+## SEJ043W BGP 설정 ##
+edit
+activate protocols bgp group ACCESS-PEER neighbor 112.190.206.167
+
+show | compare
+commit check
+commit
+
+8) SEJ043W <-> Naju-TOD-FR05 회선(Active) 물리회선 연동 및 테스트 (Ping test, dBm check) , KORNET traffic 확인
+[SEJ043W 물리회선 연동 / disable 설정 삭제 후 KORNET 트래픽 인가]
+
+delete interfaces ae47 disable
+
+show | compare
+commit check
+commit
+
+exit
+
+## 물리회선 연동 후 확인 ##
+show interfaces terse ae47
+show interfaces diagnostics optics xe-4/0/7 | no-more
+clear interfaces statistics xe-4/0/7
+ping rapid count 500 size 1000 ttl 1 112.190.209.126
+show interfaces ae47 | match rate
+show interfaces xe-4/0/7 extensive | match error
+show route 112.190.206.167/32
+show pim neighbors
+show pim interfaces
+show dhcp relay binding interface ae47
+show subscribers summary port
+show dhcp relay statistics
+show network-access aaa statistics authentication
+show network-access aaa statistics accounting
