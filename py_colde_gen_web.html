@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>OLT 파이썬 코드 제너레이터</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@14.0.0/dist/handsontable.full.min.css">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+        }
+        
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            margin: 0;
+            padding: 30px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .header-box {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+
+        p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 15px;
+        }
+
+        .table-container {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        #olt-table {
+            width: 100%;
+            height: 350px; 
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .btn-area {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .primary-btn {
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+        }
+
+        .primary-btn:hover { background-color: #0056b3; transform: translateY(-2px); }
+
+        .code-output-container {
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .output-header h3 {
+            color: #a8c7fa;
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .copy-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: background-color 0.2s;
+        }
+        
+        .copy-btn:hover { background-color: #218838; }
+
+        .console-output {
+            width: 100%;
+            height: 250px; 
+            box-sizing: border-box;
+            background-color: transparent;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            border: none;
+            outline: none;
+            resize: vertical; 
+            white-space: pre;
+            overflow: auto;
+        }
+        
+        /* Handsontable 헤더 커스텀 */
+        .handsontable th { vertical-align: middle !important; background-color: #f5f5f5; }
+        .act-bg { background-color: #d32f2f; color: white; display: block; padding: 5px; border-radius: 3px; font-weight: bold;}
+        .bk-bg { background-color: #1976d2; color: white; display: block; padding: 5px; border-radius: 3px; font-weight: bold;}
+        .base-bg { background-color: #388e3c; color: white; display: block; padding: 5px; border-radius: 3px; font-weight: bold;}
+        
+        .var-header { color: #d32f2f; font-size: 11px; font-weight: bold; }
+        .var-header-blue { color: #1976d2; font-size: 11px; font-weight: bold; }
+        .var-header-green { color: #388e3c; font-size: 11px; font-weight: bold; }
+
+        /* 특정 데이터 열 배경색 지정 (짙은 회색) */
+        .handsontable td.dark-gray-bg {
+            background-color: #b5b5b5 !important;
+            color: #000 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-box">
+        <h2>OLT 파이썬 코드 제너레이터</h2>
+        <p>💡 표의 가장 아래 빈 행에 값을 입력하면 자동으로 새 행이 추가됩니다.</p>
+    </div>
+
+    <div class="table-container">
+        <div id="olt-table"></div>
+    </div>
+
+    <div class="btn-area">
+        <button class="primary-btn" onclick="generatePythonCode()">파이썬 코드 생성하기</button>
+    </div>
+
+    <div class="code-output-container">
+        <div class="output-header">
+            <h3>🐍 Generated Python Code</h3>
+            <button class="copy-btn" onclick="copyCode()" id="copyButton">📋 메모장에 복사하기</button>
+        </div>
+        <textarea id="console" class="console-output" readonly placeholder="테이블에 데이터를 입력하고 생성 버튼을 누르면 파이썬 코드가 이곳에 출력됩니다."></textarea>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/handsontable@14.0.0/dist/handsontable.full.min.js"></script>
+    <script>
+        const initialData = [
+            [
+                "Neungju-TOD-FR01", "112.190.206.44", 
+                "SEJ044N", "SEJ048N", "xe-7/1/3", "ae17", "xe-7/0/8", "ae78", "112.190.207.86",
+                "SEJ043W", "SEJ047W", "xe-7/3/3", "ae27", "xe-7/1/8", "ae178", "112.190.208.86"
+            ],
+            ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+        ];
+
+        const container = document.getElementById('olt-table');
+
+        const hot = new Handsontable(container, {
+            data: initialData,
+            rowHeaders: true,
+            colWidths: [130, 130, 90, 100, 100, 80, 100, 80, 130, 90, 100, 100, 80, 100, 80, 130],
+            manualColumnResize: true,
+            contextMenu: true,
+            minSpareRows: 1, 
+            licenseKey: 'non-commercial-and-evaluation',
+            
+            // 💡 특정 열(Column)에 클래스(서식) 적용 설정
+            columns: [
+                {}, // 0: 장비명
+                {}, // 1: IP
+                { className: 'dark-gray-bg' }, // 2: ACT 신규SEJ
+                { className: 'dark-gray-bg' }, // 3: ACT 구분(기존SEJ)
+                {}, // 4
+                {}, // 5
+                {}, // 6
+                {}, // 7
+                {}, // 8
+                { className: 'dark-gray-bg' }, // 9: BK 신규SEJ
+                { className: 'dark-gray-bg' }, // 10: BK 구분(기존SEJ)
+                {}, // 11
+                {}, // 12
+                {}, // 13
+                {}, // 14
+                {}  // 15
+            ],
+            
+            nestedHeaders: [
+                [
+                    {label: '<span class="base-bg">장비정보</span>', colspan: 2},
+                    {label: '<span class="act-bg">ACT</span>', colspan: 7},
+                    {label: '<span class="bk-bg">BK</span>', colspan: 7}
+                ],
+                [
+                    '장비명(OLT)', 'Neighbor Lo0',
+                    '신규SEJ', '구분(기존SEJ)', '기존int', '기존ae', '신규int', '신규ae', '대국ip-address', // ACT 헤더명 변경
+                    '신규SEJ', '구분(기존SEJ)', '기존int', '기존ae', '신규int', '신규ae', '대국ip-address'  // BK 헤더명 변경
+                ],
+                [
+                    '<span class="var-header-green">NAME</span>', '<span class="var-header-green">LOOPBACK</span>',
+                    '<span class="var-header">ACT_NEW_SEJ</span>', '<span class="var-header">ACT_OLD_SEJ</span>', '<span class="var-header">ACT_OLD_INT</span>', '<span class="var-header">ACT_OLD_AE</span>', '<span class="var-header">ACT_NEW_INT</span>', '<span class="var-header">ACT_NEW_AE</span>', '<span class="var-header">ACT_REMOTE_IP</span>',
+                    '<span class="var-header-blue">BK_NEW_SEJ</span>', '<span class="var-header-blue">BK_OLD_SEJ</span>', '<span class="var-header-blue">BK_OLD_INT</span>', '<span class="var-header-blue">BK_OLD_AE</span>', '<span class="var-header-blue">BK_NEW_INT</span>', '<span class="var-header-blue">BK_NEW_AE</span>', '<span class="var-header-blue">BK_REMOTE_IP</span>'
+                ]
+            ],
+        });
+
+        function generatePythonCode() {
+            const data = hot.getData();
+            let pythonCode = "";
+            let validRowCount = 0;
+
+            data.forEach((row, index) => {
+                const isEmptyRow = row.every(cell => cell === null || cell === '' || cell === undefined);
+                if (isEmptyRow) return;
+
+                validRowCount++;
+                const varName = `olt${validRowCount}`; 
+
+                pythonCode += `${varName}=OLT()\n`;
+
+                if (row[0]) pythonCode += `${varName}.NAME='${row[0]}'\n`;
+                if (row[1]) pythonCode += `${varName}.LOOPBACK='${row[1]}'\n`;
+
+                if (row[3]) pythonCode += `${varName}.ACT_OLD_SEJ='${row[3]}'\n`;
+                if (row[4]) pythonCode += `${varName}.ACT_OLD_INT='${row[4]}'\n`;
+                if (row[5]) pythonCode += `${varName}.ACT_OLD_AE='${row[5]}'\n`;
+
+                if (row[2]) pythonCode += `${varName}.ACT_NEW_SEJ='${row[2]}'\n`;
+                if (row[6]) pythonCode += `${varName}.ACT_NEW_INT='${row[6]}'\n`;
+                if (row[7]) pythonCode += `${varName}.ACT_NEW_AE='${row[7]}'\n`;
+                if (row[8]) pythonCode += `${varName}.ACT_REMOTE_IP='${row[8]}'\n`;
+
+                if (row[10]) pythonCode += `${varName}.BK_OLD_SEJ='${row[10]}'\n`;
+                if (row[11]) pythonCode += `${varName}.BK_OLD_INT='${row[11]}'\n`;
+                if (row[12]) pythonCode += `${varName}.BK_OLD_AE='${row[12]}'\n`;
+
+                if (row[9]) pythonCode += `${varName}.BK_NEW_SEJ='${row[9]}'\n`;
+                if (row[13]) pythonCode += `${varName}.BK_NEW_INT='${row[13]}'\n`;
+                if (row[14]) pythonCode += `${varName}.BK_NEW_AE='${row[14]}'\n`;
+                if (row[15]) pythonCode += `${varName}.BK_REMOTE_IP='${row[15]}'\n`;
+                
+                pythonCode += `\n`; 
+            });
+
+            if (pythonCode === "") {
+                pythonCode = "입력된 데이터가 없습니다.";
+            }
+
+            document.getElementById('console').value = pythonCode.trim();
+        }
+
+        function copyCode() {
+            const textarea = document.getElementById('console');
+            const copyBtn = document.getElementById('copyButton');
+            
+            textarea.select();
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                const originalText = copyBtn.innerText;
+                copyBtn.innerText = "✔️ 복사 완료!";
+                copyBtn.style.backgroundColor = "#20c997";
+                
+                setTimeout(() => {
+                    copyBtn.innerText = originalText;
+                    copyBtn.style.backgroundColor = "#28a745";
+                }, 2000);
+            }).catch(err => {
+                alert("복사 실패: 브라우저가 클립보드 복사를 지원하지 않습니다.");
+            });
+        }
+
+        window.onload = function() {
+            setTimeout(() => {
+                hot.render();
+                generatePythonCode();
+            }, 100);
+        }
+    </script>
+</body>
+</html>

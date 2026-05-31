@@ -13,6 +13,7 @@ def full_name_to_sej(sej_full_name):
 
 # 4. 작업순서 - 주요작업사항 - 본작업
 def olt_cutover_block(olt,full_name_act_sej,full_name_bkup_sej):
+
     act_sej = full_name_to_sej(full_name_act_sej)
     bkup_sej = full_name_to_sej(full_name_bkup_sej)
     script = f"""

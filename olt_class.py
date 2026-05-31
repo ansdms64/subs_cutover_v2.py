@@ -1,9 +1,9 @@
 ## OLt 1개 절차 작업을 위한 스크립트// ****부분 확인 필요
 class OLT:
     """네트워크 OLT 장비 정보를 대문자 변수로 관리하는 클래스"""
-    def __init__(self, name: str):
+    def __init__(self):
         # 기본 장비 정보
-        self.NAME = name
+        self.NAME = None
         self.LOOPBACK = None
 
         # Active (ACT) OLD 정보
